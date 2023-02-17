@@ -122,3 +122,78 @@ const p = new Printer();
 const btn = document.querySelector("button")!;
 // btn.addEventListener("click", p.showMessage.bind(p)); // Another solution
 btn.addEventListener("click", p.showMessage);
+
+//// Validation with Decorators
+
+interface ValidatorConfig {
+  [property: string]: {
+    [validatableProps: string]: string[]; // ['required', 'positive']
+  };
+}
+
+const registeredValidators: ValidatorConfig = {};
+
+const RequiredItem = (target: any, propName: string) => {
+  registeredValidators[target.constructor.name] = {
+    ...registeredValidators[target.constructor.name],
+    [propName]: [
+      ...(registeredValidators[target.constructor.name]?.[propName] ?? []),
+      "required",
+    ],
+  };
+};
+const PositiveNumber = (target: any, propName: string) => {
+  registeredValidators[target.constructor.name] = {
+    ...registeredValidators[target.constructor.name],
+    [propName]: [
+      ...(registeredValidators[target.constructor.name]?.[propName] ?? []),
+      "positive",
+    ],
+  };
+};
+const validate = (obj: any) => {
+  const objValidConfig = registeredValidators[obj.constructor.name];
+  if (!objValidConfig) return true;
+  let isValid = true;
+  for (const prop in objValidConfig) {
+    for (const validator of objValidConfig[prop]) {
+      switch (validator) {
+        case "required":
+          if (!obj[prop]) isValid = false;
+          break;
+
+        case "positive":
+          if (!(obj[prop] > 0)) isValid = false;
+          break;
+      }
+    }
+  }
+  return isValid;
+};
+
+class Course {
+  @RequiredItem
+  title: string;
+  @PositiveNumber
+  price: number;
+  constructor(t: string, p: number) {
+    this.title = t;
+    this.price = p;
+  }
+}
+
+const form = document.querySelector("form")!;
+form.addEventListener("submit", (e: SubmitEvent) => {
+  e.preventDefault();
+  const titleEl = document.getElementById("title") as HTMLInputElement;
+  const priceEl = document.getElementById("price") as HTMLInputElement;
+  const title = titleEl.value;
+  const price = +priceEl.value;
+
+  const createdCourse = new Course(title, price);
+  if (!validate(createdCourse)) {
+    alert("Invalid inputs!");
+    return;
+  }
+  console.log(createdCourse);
+});
