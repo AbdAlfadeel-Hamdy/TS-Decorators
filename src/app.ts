@@ -89,3 +89,36 @@ class Product {
     return this._price * (tax + 1);
   }
 }
+
+/////////////////////////////
+// Autobind Decorator
+
+const Autobind = (
+  target: any,
+  methodName: string,
+  descriptor: PropertyDescriptor
+) => {
+  console.log(target, methodName);
+  const originalMethod = descriptor.value;
+  const adjustedDescriptor: PropertyDescriptor = {
+    enumerable: false,
+    configurable: true,
+    get() {
+      const boundFn = originalMethod.bind(this);
+      return boundFn;
+    },
+  };
+  return adjustedDescriptor;
+};
+class Printer {
+  message = "This works!";
+  @Autobind
+  showMessage() {
+    console.log(this.message);
+  }
+}
+
+const p = new Printer();
+const btn = document.querySelector("button")!;
+// btn.addEventListener("click", p.showMessage.bind(p)); // Another solution
+btn.addEventListener("click", p.showMessage);
