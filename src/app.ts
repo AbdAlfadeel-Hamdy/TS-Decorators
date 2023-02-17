@@ -9,14 +9,21 @@ const Logger = (logString: string) => {
 const WithTemplate = (template: string, hookId: string) => {
   console.log("Template Factory");
 
-  return (constructor: any) => {
-    console.log("Rendering...");
-    const person = new constructor();
-    const hookEl = document.getElementById(hookId);
-    if (hookEl) {
-      hookEl.innerHTML = template;
-      hookEl.querySelector("h1")!.textContent = person.name;
-    }
+  return <T extends { new (...args: any[]): { name: string } }>(
+    originalConstructor: T
+  ) => {
+    // Must be initiated to execute
+    return class extends originalConstructor {
+      constructor(..._: any[]) {
+        super();
+        console.log("Rendering...");
+        const hookEl = document.getElementById(hookId);
+        if (hookEl) {
+          hookEl.innerHTML = template;
+          hookEl.querySelector("h1")!.textContent = this.name;
+        }
+      }
+    };
   };
 };
 
